@@ -1,6 +1,6 @@
 package codec
 
-import "finishy1995/go-library/network/core"
+import "github.com/finishy1995/go-library/network/core"
 
 var (
 	zeroPacket = []byte("")

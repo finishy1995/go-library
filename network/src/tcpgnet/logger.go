@@ -1,7 +1,7 @@
 package tcpgnet
 
 import (
-	"finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/log"
 )
 
 type logger struct {

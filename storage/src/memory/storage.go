@@ -1,9 +1,9 @@
 package memory
 
 import (
-	"finishy1995/go-library/routine"
-	"finishy1995/go-library/storage/core"
-	"finishy1995/go-library/storage/src/tools"
+	"github.com/finishy1995/go-library/routine"
+	"github.com/finishy1995/go-library/storage/core"
+	"github.com/finishy1995/go-library/storage/src/tools"
 	"fmt"
 	"reflect"
 	"sync"

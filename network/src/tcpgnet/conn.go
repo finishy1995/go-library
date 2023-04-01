@@ -1,8 +1,8 @@
 package tcpgnet
 
 import (
-	"finishy1995/go-library/network/core"
-	"finishy1995/go-library/network/protocol"
+	"github.com/finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/network/protocol"
 	"bytes"
 	"net"
 	"sync"

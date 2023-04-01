@@ -2,10 +2,10 @@ package tcpnet
 
 import (
 	"bytes"
-	"finishy1995/go-library/log"
-	"finishy1995/go-library/network/codec"
-	"finishy1995/go-library/network/core"
-	"finishy1995/go-library/network/protocol"
+	"github.com/finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/network/codec"
+	"github.com/finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/network/protocol"
 	"net"
 	"sync"
 	"time"

@@ -3,7 +3,7 @@ package routine
 import (
 	"bytes"
 	"errors"
-	"finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/log"
 	"fmt"
 	"runtime"
 )

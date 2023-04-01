@@ -1,8 +1,8 @@
 package codec
 
 import (
-	"finishy1995/go-library/buffer/bytebuffer"
-	"finishy1995/go-library/buffer/ringbuffer"
+	"github.com/finishy1995/go-library/buffer/bytebuffer"
+	"github.com/finishy1995/go-library/buffer/ringbuffer"
 )
 
 // ConnHelper Codec 连接帮助

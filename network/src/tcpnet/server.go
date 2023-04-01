@@ -2,10 +2,10 @@ package tcpnet
 
 import (
 	"crypto/tls"
-	"finishy1995/go-library/log"
-	"finishy1995/go-library/network/codec"
-	"finishy1995/go-library/network/core"
-	"finishy1995/go-library/routine"
+	"github.com/finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/network/codec"
+	"github.com/finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/routine"
 	"net"
 	"sync"
 	"time"

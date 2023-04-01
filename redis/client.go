@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/log"
 	"context"
 	"github.com/go-redis/redis/v8"
 	"strings"

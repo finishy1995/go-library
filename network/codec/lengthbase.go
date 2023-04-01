@@ -1,7 +1,7 @@
 package codec
 
 import (
-	"finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/network/core"
 	"encoding/binary"
 )
 

@@ -1,6 +1,6 @@
 package network
 
-import "finishy1995/go-library/network/core"
+import "github.com/finishy1995/go-library/network/core"
 
 // NetType 网络类型
 type NetType int16

@@ -2,8 +2,8 @@ package tcpgnet
 
 import (
 	"encoding/binary"
-	"finishy1995/go-library/log"
-	"finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/network/core"
 	"sync"
 	"time"
 

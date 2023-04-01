@@ -1,6 +1,6 @@
 package agent
 
-import "finishy1995/go-library/network/core"
+import "github.com/finishy1995/go-library/network/core"
 
 // SingleAgent 最简单的网络代理，单例且不响应任何事件
 type SingleAgent struct {

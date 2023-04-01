@@ -1,7 +1,7 @@
 package routine
 
 import (
-	"finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/log"
 	"errors"
 	"fmt"
 	"github.com/panjf2000/ants/v2"

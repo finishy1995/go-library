@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"finishy1995/go-library/storage/src/dynamodb"
-	"finishy1995/go-library/storage/src/memory"
+	"github.com/finishy1995/go-library/storage/src/dynamodb"
+	"github.com/finishy1995/go-library/storage/src/memory"
 )
 
 // Storage 存储

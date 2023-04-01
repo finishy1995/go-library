@@ -1,10 +1,10 @@
 package network
 
 import (
-	"finishy1995/go-library/network/core"
-	"finishy1995/go-library/network/src/tcpgnet"
-	"finishy1995/go-library/network/src/tcpnet"
-	"finishy1995/go-library/routine"
+	"github.com/finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/network/src/tcpgnet"
+	"github.com/finishy1995/go-library/network/src/tcpnet"
+	"github.com/finishy1995/go-library/routine"
 	"sync"
 )
 

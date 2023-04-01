@@ -6,8 +6,8 @@
 package network
 
 import (
-	"finishy1995/go-library/network/agent"
-	"finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/network/agent"
+	"github.com/finishy1995/go-library/network/core"
 )
 
 func test() {

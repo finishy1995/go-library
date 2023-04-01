@@ -1,7 +1,7 @@
 package network
 
 import (
-	"finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/network/core"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

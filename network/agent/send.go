@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"finishy1995/go-library/log"
-	"finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/network/core"
 )
 
 // SendAgent 发消息代理，一连上就开始发消息

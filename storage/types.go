@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"finishy1995/go-library/storage/core"
+	"github.com/finishy1995/go-library/storage/core"
 	"time"
 )
 

@@ -2,8 +2,8 @@ package dynamodb
 
 import (
 	"context"
-	"finishy1995/go-library/storage/core"
-	"finishy1995/go-library/storage/src/tools"
+	"github.com/finishy1995/go-library/storage/core"
+	"github.com/finishy1995/go-library/storage/src/tools"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

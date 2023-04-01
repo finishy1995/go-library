@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"finishy1995/go-library/storage/src/tools"
+	"github.com/finishy1995/go-library/storage/src/tools"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"strings"

@@ -1,4 +1,4 @@
-module finishy1995/go-library
+module github.com/finishy1995/go-library
 
 go 1.18
 

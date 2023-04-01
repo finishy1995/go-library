@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"finishy1995/go-library/log"
-	"finishy1995/go-library/network/core"
+	"github.com/finishy1995/go-library/log"
+	"github.com/finishy1995/go-library/network/core"
 )
 
 // EchoAgent 最简单的 Echo 代理，发什么回什么，使用单例实现（也可以和 Conn 一一对应）

@@ -2,7 +2,7 @@ package tools
 
 import (
 	"encoding/json"
-	"finishy1995/go-library/storage/core"
+	"github.com/finishy1995/go-library/storage/core"
 	"reflect"
 	"strings"
 )
