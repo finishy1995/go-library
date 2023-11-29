@@ -182,7 +182,7 @@ func (st *Storage) First(value interface{}, hash interface{}, args ...interface{
 		return core.ErrUnsupportedValueType
 	}
 	if rangeKey != "" {
-		defaultOp := dynamo.GreaterOrEqual
+		defaultOp := dynamo.Equal
 		if len(args) >= 2 {
 			defaultOp = dynamo.Operator(args[1].(string))
 		}
