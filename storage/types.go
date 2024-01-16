@@ -14,6 +14,8 @@ const (
 	// DynamoDB 借助 NoSQL 数据库的数据存取，保证集群内的数据安全，保证1秒内的数据最终一致性（只有货币相关操作是强一致性）
 	// 每个接口调用小于 10ms
 	DynamoDB
+	// MongoDB 文档数据库
+	MongoDB
 	// 这里可以添加其他数据库类型，例如 MongoDB、MySQL 等，MySQL 可以借助 ORM 库实现
 )
 
@@ -24,17 +26,17 @@ type Model struct {
 
 type Config struct {
 	StorageType string        `json:",default=memory,options=memory|dynamo"`
-	Host        string        `json:",optional"`
+	Region      string        `json:",optional"`
 	Endpoint    string        `json:",optional"`
-	Prefix      string        `json:",optional"`
+	Database    string        `json:",optional"`
 	MaxLength   int           `json:",default=0"`
 	Tick        time.Duration `json:",default=1s"`
-	AK          string        `json:",optional"`
-	SK          string        `json:",optional"`
-	Prob        float64       `json:",default=0,optional"`
+	User        string        `json:",optional"`
+	Password    string        `json:",optional"`
 }
 
 const (
 	InMemoryStr = "memory"
 	DynamoDBStr = "dynamo"
+	MongoDBStr  = "mongo"
 )

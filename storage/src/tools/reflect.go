@@ -2,9 +2,11 @@ package tools
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/finishy1995/go-library/storage/core"
 	"reflect"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -65,7 +67,7 @@ func GetHashAndRangeKey(value interface{}, useTag bool) (hashKey string, rangeKe
 		fieldType := tp.Field(i)
 		tag := fieldType.Tag.Get("dynamo")
 		tagArr := strings.Split(tag, ",")
-		name := fieldType.Name
+		name := LowerAllChar(fieldType.Name)
 		if useTag {
 			if len(tagArr) > 0 && tagArr[0] != "" {
 				name = tagArr[0]
@@ -82,6 +84,90 @@ func GetHashAndRangeKey(value interface{}, useTag bool) (hashKey string, rangeKe
 		}
 	}
 	return
+}
+
+// GetFieldInfo 获取结构体中除了特定标签外的所有字段的名称和值
+func GetFieldInfo(value interface{}) map[string]interface{} {
+	fieldsInfo := make(map[string]interface{})
+
+	val := reflect.ValueOf(value)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	tp := val.Type()
+	if val.Kind() != reflect.Struct {
+		fmt.Println("Provided value is not a struct or a pointer to struct")
+		return fieldsInfo
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		fieldType := tp.Field(i)
+
+		tag := fieldType.Tag.Get("dynamo")
+		if tag == "" || (!strings.Contains(tag, TagHashMark) && !strings.Contains(tag, TagRangeMark)) {
+			fieldsInfo[LowerAllChar(fieldType.Name)] = field.Interface()
+		}
+	}
+
+	return fieldsInfo
+}
+
+func GetHashAndRangeValue(value interface{}) (hashValue interface{}, rangeValue interface{}) {
+	val := reflect.ValueOf(value)
+	// 确保我们在处理指向结构体的指针时正确地解引用
+	if val.Kind() == reflect.Ptr && !val.IsNil() {
+		val = val.Elem()
+	}
+	// 类型检查
+	tp := reflect.TypeOf(value)
+	if tp.Kind() == reflect.Ptr {
+		tp = tp.Elem()
+	}
+	k := tp.Kind()
+	if k == reflect.Slice {
+		tp = tp.Elem()
+		k = tp.Kind()
+	}
+	if k != reflect.Struct {
+		return
+	}
+
+	for i := 0; i < tp.NumField(); i++ {
+		fieldType := tp.Field(i)
+		tag := fieldType.Tag.Get("dynamo")
+		tagArr := strings.Split(tag, ",")
+		for j := 1; j < len(tagArr); j++ {
+			if tagArr[j] == TagHashMark {
+				hashValue = val.Field(i).Interface()
+				continue
+			}
+			if tagArr[j] == TagRangeMark {
+				rangeValue = val.Field(i).Interface()
+			}
+		}
+	}
+	return
+}
+
+// lowerFirstChar 将字符串的首字母转换为小写
+func lowerFirstChar(s string) string {
+	if s == "" {
+		return s
+	}
+
+	// 将字符串转换为rune切片以支持多字节字符
+	runes := []rune(s)
+	runes[0] = unicode.ToLower(runes[0])
+
+	return string(runes)
+}
+
+func LowerAllChar(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToLower(s)
 }
 
 func TrySetStructVersion(value interface{}) (uint64, error) {

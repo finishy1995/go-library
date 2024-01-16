@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/finishy1995/go-library/storage/src/dynamodb"
 	"github.com/finishy1995/go-library/storage/src/memory"
+	"github.com/finishy1995/go-library/storage/src/mongodb"
 )
 
 // Storage 存储
@@ -39,6 +40,7 @@ var (
 	typeStrMap = map[Type]string{
 		InMemory: InMemoryStr,
 		DynamoDB: DynamoDBStr,
+		MongoDB:  MongoDBStr,
 	}
 )
 
@@ -52,10 +54,12 @@ func GetStorageTypeStr(typ Type) string {
 func NewStorage(config *Config) Storage {
 	switch config.StorageType {
 	case typeStrMap[DynamoDB]:
-		if config.Prefix != "" {
-			return dynamodb.NewStorage(config.Host, config.Endpoint, config.Prefix, config.AK, config.SK)
+		if config.Database != "" {
+			return dynamodb.NewStorage(config.Region, config.Endpoint, config.Database, config.User, config.Password)
 		}
-		return dynamodb.NewStorage(config.Host, config.Endpoint, "", config.AK, config.SK)
+		return dynamodb.NewStorage(config.Region, config.Endpoint, "", config.User, config.Password)
+	case typeStrMap[MongoDB]:
+		return mongodb.NewStorage(config.Endpoint, config.User, config.Password, config.Database)
 	default:
 		return memory.NewStorage(config.MaxLength, config.Tick)
 	}
