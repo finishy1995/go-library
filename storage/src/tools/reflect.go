@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/finishy1995/go-library/storage/core"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -168,6 +169,97 @@ func LowerAllChar(s string) string {
 		return s
 	}
 	return strings.ToLower(s)
+}
+
+func GetPointer(value interface{}) interface{} {
+	val := reflect.ValueOf(value)
+	if val.Kind() != reflect.Ptr {
+		// 如果不是指针，则创建一个指向它的指针
+		valPtr := reflect.New(reflect.TypeOf(value))
+		valPtr.Elem().Set(val)
+		return valPtr.Interface()
+	}
+	return value // 已经是指针
+}
+
+func TrySetStructDefaultValue(value interface{}) error {
+	val := reflect.ValueOf(value)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Struct {
+		return core.ErrUnsupportedValueType
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		if !field.CanSet() || !isZero(field) {
+			continue
+		}
+
+		tag := val.Type().Field(i).Tag.Get("dynamo")
+		if defaultVal := parseDefaultTag(tag); defaultVal != "" {
+			if err := setDefaultValue(field, defaultVal); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// isNonZero checks if the field is non-zero (has been set to a value other than the zero value for its type).
+func isZero(field reflect.Value) bool {
+	switch field.Kind() {
+	case reflect.Slice, reflect.Map, reflect.Ptr, reflect.Interface:
+		return field.IsNil()
+
+	default:
+		return field.IsZero()
+	}
+}
+
+func parseDefaultTag(tag string) string {
+	parts := strings.Split(tag, ",")
+	for _, part := range parts {
+		if strings.HasPrefix(part, "default=") {
+			return strings.TrimPrefix(part, "default=")
+		}
+	}
+	return ""
+}
+
+func setDefaultValue(field reflect.Value, defaultVal string) error {
+	switch field.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		val, err := strconv.ParseInt(defaultVal, 10, 64)
+		if err != nil {
+			return err
+		}
+		field.SetInt(val)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		val, err := strconv.ParseUint(defaultVal, 10, 64)
+		if err != nil {
+			return err
+		}
+		field.SetUint(val)
+	case reflect.Float32, reflect.Float64:
+		val, err := strconv.ParseFloat(defaultVal, 64)
+		if err != nil {
+			return err
+		}
+		field.SetFloat(val)
+	case reflect.Bool:
+		val, err := strconv.ParseBool(defaultVal)
+		if err != nil {
+			return err
+		}
+		field.SetBool(val)
+	case reflect.String:
+		field.SetString(defaultVal)
+	default:
+		return fmt.Errorf("unsupported default set field, type: %s", field.Kind())
+	}
+	return nil
 }
 
 func TrySetStructVersion(value interface{}) (uint64, error) {

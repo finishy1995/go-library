@@ -1,20 +1,28 @@
 package mongodb
 
 import (
-	"fmt"
+	"context"
 	"github.com/finishy1995/go-library/storage/core"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 type Student struct {
 	core.Model
 	Id       string `dynamo:",hash"`
-	Age      int    `json:",omitempty"`
-	Score    float32
+	Age      int
+	Score    float32 `dynamo:",default=0.1"`
 	Star     bool
 	KeyValue map[string]string
 	Array    []int32
 	Friends  []*Student
+}
+
+type Classmates struct {
+	core.Model
+	Id     string  `dynamo:",hash"`
+	UserId int     `dynamo:",range"`
+	Score  float32 `dynamo:",default=0.2"`
 }
 
 var (
@@ -29,26 +37,38 @@ func initSt() {
 
 func TestNewStorage(t *testing.T) {
 	initSt()
-	if st == nil {
-		t.Errorf("st cannot be nil")
-	}
+	assert.NotNil(t, st, "st cannot be nil")
 }
 
 func TestStorage_CreateTable(t *testing.T) {
-	initSt()
+	dropTable()
+
+	createTable(t)
+	// 重试，应该没有错误
+	createTable(t)
+}
+
+func createTable(t *testing.T) {
 	err := st.CreateTable(Student{})
-	if err != nil {
-		t.Errorf("TestStorage_CreateTable failed %s", err.Error())
-	}
+	assert.Nil(t, err)
+	err = st.CreateTable(Classmates{})
+	assert.Nil(t, err)
+}
+
+func dropTable() {
+	initSt()
+	st.db.Collection("Student").Drop(context.Background())
+	st.db.Collection("Classmates").Drop(context.Background())
 }
 
 func TestStorage_Create(t *testing.T) {
-	initSt()
-	err := st.Create(Student{
-		Id:    "111",
-		Age:   1,
-		Score: 0.2,
-		Star:  true,
+	dropTable()
+	createTable(t)
+
+	asserts := assert.New(t)
+	stu := Student{
+		Id:   "111",
+		Star: true,
 		KeyValue: map[string]string{
 			"a": "1",
 			"b": "2",
@@ -59,24 +79,53 @@ func TestStorage_Create(t *testing.T) {
 				Id: "22",
 			},
 		},
-	})
-
-	if err != nil {
-		t.Errorf("TestStorage_CreateTable failed %s", err.Error())
 	}
+	var stuReal Student
+	err := st.Create(stu)
+	asserts.Nil(err)
+	err = st.Create(stu)
+	asserts.NotNil(err)
+	err = st.First(&stuReal, "111")
+	asserts.Nil(err)
+	asserts.Equal(true, stuReal.Star)
+	asserts.Equal(float32(0.1), stuReal.Score)
+
+	cls := Classmates{
+		Id:     "111",
+		UserId: 10,
+	}
+	var clsReal Classmates
+	err = st.Create(cls)
+	asserts.Nil(err)
+	err = st.Create(cls)
+	asserts.NotNil(err)
+	err = st.First(&clsReal, "111")
+	asserts.Equal(core.ErrMissingRangeValue, err)
+	err = st.First(&clsReal, "111", 10)
+	asserts.Nil(err)
+	asserts.Equal(10, clsReal.UserId)
+	asserts.Equal(float32(0.2), clsReal.Score)
 }
 
 func TestStorage_Delete(t *testing.T) {
-	initSt()
+	dropTable()
+	createTable(t)
+
+	asserts := assert.New(t)
 	err := st.Delete(Student{}, "111")
-	if err != nil {
-		t.Errorf("TestStorage_CreateTable failed %s", err.Error())
-	}
+	asserts.Nil(err)
+	err = st.Create(Student{Id: "2"})
+	asserts.Nil(err)
+	err = st.Delete(Student{}, "111")
+	asserts.Nil(err)
 }
 
 func TestStorage_Save(t *testing.T) {
-	initSt()
-	err := st.Save(&Student{
+	dropTable()
+	createTable(t)
+
+	asserts := assert.New(t)
+	stu := &Student{
 		Id:    "111",
 		Age:   1,
 		Score: 0.31,
@@ -86,48 +135,105 @@ func TestStorage_Save(t *testing.T) {
 			"b": "3",
 		},
 		Array: []int32{1, 8},
-	})
-	if err != nil {
-		t.Errorf("TestStorage_CreateTable failed %s", err.Error())
 	}
+	err := st.Save(stu)
+	asserts.Equal(core.ErrExpiredValue, err)
+	err = st.Create(*stu)
+	asserts.Nil(err)
+	asserts.Equal(uint64(1), stu.Version)
+	stu.Score += 1
+	err = st.Save(stu)
+	asserts.Nil(err)
+
+	var stuReal Student
+	err = st.First(&stuReal, "111")
+	asserts.Nil(err)
+	asserts.Equal(float32(1.31), stuReal.Score)
+	asserts.Equal(2, len(stuReal.KeyValue))
+	asserts.Equal("1", stuReal.KeyValue["a"])
+	asserts.Equal("3", stuReal.KeyValue["b"])
+	asserts.Equal(2, len(stuReal.Array))
+	asserts.Equal(int32(1), stuReal.Array[0])
+	asserts.Equal(int32(8), stuReal.Array[1])
+	asserts.Equal(uint64(2), stuReal.Version)
+
+	cls := &Classmates{
+		Id:     "2",
+		UserId: 0,
+	}
+	err = st.Create(*cls)
+	asserts.Nil(err)
+	cls.UserId += 1
+	err = st.Save(cls)
+	asserts.Equal(core.ErrExpiredValue, err)
+
+	// 当出现 save failed，一定要先 first，再 save
+	err = st.First(cls, "2", 0)
+	cls.Score++
+	err = st.Save(cls)
+	asserts.Nil(err)
 }
 
 func TestStorage_First(t *testing.T) {
-	initSt()
+	dropTable()
+	createTable(t)
+
+	asserts := assert.New(t)
 	stu := &Student{}
 	err := st.First(stu, "111")
+	asserts.Equal(core.ErrNotFound, err)
 
-	if err != nil {
-		t.Errorf("TestStorage_CreateTable failed %s", err.Error())
-	}
-	fmt.Println(stu)
+	err = st.Create(Classmates{
+		Id:     "33",
+		UserId: 12,
+		Score:  2.3,
+	})
+	asserts.Nil(err)
+	var cls Classmates
+	err = st.First(&cls, "33")
+	asserts.Equal(core.ErrMissingRangeValue, err)
+	err = st.First(&cls, "33", 11)
+	asserts.Equal(core.ErrNotFound, err)
+	err = st.First(&cls, "33", 12)
+	asserts.Nil(err)
+	asserts.Equal(float32(2.3), cls.Score)
 }
 
 func TestStorage_Find(t *testing.T) {
-	initSt()
+	dropTable()
+	createTable(t)
 
-	// 插入测试数据
+	// 插入更多的测试数据
 	setupTestData(t)
-	defer teardownTestData()
 
 	// 测试用例
 	testCases := []struct {
 		name     string
 		expr     string
 		args     []interface{}
+		limit    int64
 		expected int // 预期返回的记录数
 	}{
 		{
-			name:     "Test AND condition",
+			name:     "Test AND condition with normal limit",
 			expr:     "Age >= ? AND Star = ?",
-			args:     []interface{}{20, true},
-			expected: 1, // 根据您的数据库内容调整
+			args:     []interface{}{18, true},
+			limit:    -1,
+			expected: 2, // 根据您的数据库内容调整
 		},
 		{
-			name:     "Test OR condition",
-			expr:     "Age = ? OR Score > ?",
-			args:     []interface{}{18, 0.5},
-			expected: 1, // 根据您的数据库内容调整
+			name:     "Test OR condition with no limit",
+			expr:     "Age > ? OR Score > ?",
+			args:     []interface{}{19, 0.5},
+			limit:    -1,
+			expected: 3, // 根据您的数据库内容调整
+		},
+		{
+			name:     "Test condition with limited results",
+			expr:     "Age > ?",
+			args:     []interface{}{15},
+			limit:    2,
+			expected: 2, // 指定限制为2，预期返回2条记录
 		},
 		// 添加更多测试用例...
 	}
@@ -135,25 +241,25 @@ func TestStorage_Find(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var results []Student
-			err := st.Find(&results, 10, tc.expr, tc.args...)
+			err := st.Find(&results, tc.limit, tc.expr, tc.args...)
 			if err != nil {
 				t.Fatalf("Find failed: %v", err)
 			}
 
 			if len(results) != tc.expected {
-				t.Errorf("Expected %d results, got %d", tc.expected, len(results))
+				t.Errorf("Expected %d results, got %d for test case '%s'", tc.expected, len(results), tc.name)
 			}
-
-			fmt.Println(results[0])
 		})
 	}
 }
 
 func setupTestData(t *testing.T) {
-	// 插入一些学生记录用于测试
+	// 插入更多的学生记录用于测试
 	students := []Student{
 		{Id: "1", Age: 20, Star: true /* ...其他字段... */},
 		{Id: "2", Age: 18, Score: 0.75 /* ...其他字段... */},
+		{Id: "3", Age: 19, Star: true /* ...其他字段... */},
+		{Id: "4", Age: 21 /* ...其他字段... */},
 		// ...其他测试数据...
 	}
 
@@ -163,8 +269,4 @@ func setupTestData(t *testing.T) {
 			t.Logf("Warning: failed to insert test data: %v", err.Error())
 		}
 	}
-}
-
-func teardownTestData() {
-	// TODO:
 }

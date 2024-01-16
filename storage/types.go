@@ -25,7 +25,7 @@ type Model struct {
 }
 
 type Config struct {
-	StorageType string        `json:",default=memory,options=memory|dynamo"`
+	StorageType string        `json:",default=memory,options=memory|dynamo|mongo"`
 	Region      string        `json:",optional"`
 	Endpoint    string        `json:",optional"`
 	Database    string        `json:",optional"`

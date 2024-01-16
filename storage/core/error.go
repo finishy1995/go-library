@@ -19,5 +19,5 @@ var (
 	ErrNotFound = errors.New("no item found")
 
 	// ErrExpiredValue 当前对象非最新
-	ErrExpiredValue = errors.New("item has updated")
+	ErrExpiredValue = errors.New("item has updated, or you cannot change hash or range key")
 )

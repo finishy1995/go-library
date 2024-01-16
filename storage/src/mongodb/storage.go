@@ -86,7 +86,8 @@ func (s *Storage) CreateTable(value interface{}) error {
 	defer cancel()
 	// 创建集合
 	if err := s.db.CreateCollection(ctx, tableName); err != nil {
-		return err
+		log.Warning("collection create failed by %s", err.Error())
+		return nil
 	}
 
 	// 获取集合的索引视图
@@ -97,17 +98,12 @@ func (s *Storage) CreateTable(value interface{}) error {
 	var indexModel mongo.IndexModel
 	if rangeKey != "" {
 		indexModel = mongo.IndexModel{
-			Keys: bson.M{
-				hashKey:  1, // 1 表示升序
-				rangeKey: 1, // 1 表示升序
-			},
+			Keys:    bson.D{{hashKey, 1}, {rangeKey, 1}},
 			Options: options.Index().SetUnique(true),
 		}
 	} else {
 		indexModel = mongo.IndexModel{
-			Keys: bson.M{
-				hashKey: 1, // 1 表示升序
-			},
+			Keys:    bson.D{{hashKey, 1}},
 			Options: options.Index().SetUnique(true),
 		}
 	}
@@ -126,10 +122,18 @@ func (s *Storage) Create(value interface{}) error {
 	if collection == nil {
 		return core.ErrUnsupportedValueType
 	}
+	valPtr := tools.GetPointer(value)
+	if valPtr == nil {
+		return core.ErrUnsupportedValueType
+	}
+	err := tools.TrySetStructDefaultValue(valPtr)
+	if err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	_, err := collection.InsertOne(ctx, value)
+	_, err = collection.InsertOne(ctx, valPtr)
 	return err
 }
 
@@ -266,9 +270,14 @@ func (s *Storage) Find(value interface{}, limit int64, expr string, args ...inte
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
+	var cursor *mongo.Cursor
 	// 执行查询
-	opts := options.Find().SetLimit(limit)
-	cursor, err := collection.Find(ctx, filter, opts)
+	if limit > 0 {
+		opts := options.Find().SetLimit(limit)
+		cursor, err = collection.Find(ctx, filter, opts)
+	} else {
+		cursor, err = collection.Find(ctx, filter)
+	}
 	if err != nil {
 		return err
 	}
