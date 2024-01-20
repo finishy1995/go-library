@@ -128,6 +128,9 @@ func buildFilterFromAST(node *ast.BinaryNode) (bson.D, error) {
 		if err != nil {
 			return nil, fmt.Errorf("right operand error: %v", err)
 		}
+		if right, ok := rightVal.(string); ok {
+			rightVal = replaceMagicWithDot(right)
+		}
 
 		switch node.Operator {
 		case ">":

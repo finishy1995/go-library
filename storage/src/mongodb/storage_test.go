@@ -269,7 +269,7 @@ func TestStorage_Find(t *testing.T) {
 			expr:     "Id = ?",
 			args:     []interface{}{"finishy@qq.com"},
 			limit:    10,
-			expected: 0,
+			expected: 1,
 		},
 		// 添加更多测试用例...
 	}
@@ -295,7 +295,7 @@ func setupTestData(t *testing.T) {
 		{Id: "1", Age: 20, Star: true /* ...其他字段... */},
 		{Id: "2", Age: 18, Score: 0.75 /* ...其他字段... */},
 		{Id: "3", Age: 19, Star: true /* ...其他字段... */},
-		{Id: "4", Age: 21 /* ...其他字段... */},
+		{Id: "finishy@qq.com", Age: 21 /* ...其他字段... */},
 		// ...其他测试数据...
 	}
 
