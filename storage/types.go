@@ -20,9 +20,7 @@ const (
 )
 
 // Model 存储基本模型
-type Model struct {
-	core.Model
-}
+type Model core.Model
 
 type Config struct {
 	StorageType string        `json:",default=memory,options=memory|dynamo|mongo"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/finishy1995/go-library/storage/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -18,9 +19,17 @@ type Student struct {
 	Friends  []*Student
 }
 
-type Classmates struct {
+type TestInsertStructAgain struct {
+	TestInsertStruct
+}
+
+type TestInsertStruct struct {
+	Id string `dynamo:",hash"`
 	core.Model
-	Id     string  `dynamo:",hash"`
+}
+
+type Classmates struct {
+	TestInsertStructAgain
 	UserId int     `dynamo:",range"`
 	Score  float32 `dynamo:",default=0.2"`
 }
@@ -91,7 +100,9 @@ func TestStorage_Create(t *testing.T) {
 	asserts.Equal(float32(0.1), stuReal.Score)
 
 	cls := Classmates{
-		Id:     "111",
+		TestInsertStructAgain: TestInsertStructAgain{TestInsertStruct{
+			Id: "111",
+		}},
 		UserId: 10,
 	}
 	var clsReal Classmates
@@ -124,7 +135,7 @@ func TestStorage_Save(t *testing.T) {
 	dropTable()
 	createTable(t)
 
-	asserts := assert.New(t)
+	asserts := require.New(t)
 	stu := &Student{
 		Id:    "111",
 		Age:   1,
@@ -158,7 +169,9 @@ func TestStorage_Save(t *testing.T) {
 	asserts.Equal(uint64(2), stuReal.Version)
 
 	cls := &Classmates{
-		Id:     "2",
+		TestInsertStructAgain: TestInsertStructAgain{TestInsertStruct{
+			Id: "2",
+		}},
 		UserId: 0,
 	}
 	err = st.Create(*cls)
@@ -184,7 +197,9 @@ func TestStorage_First(t *testing.T) {
 	asserts.Equal(core.ErrNotFound, err)
 
 	err = st.Create(Classmates{
-		Id:     "33",
+		TestInsertStructAgain: TestInsertStructAgain{TestInsertStruct{
+			Id: "33",
+		}},
 		UserId: 12,
 		Score:  2.3,
 	})

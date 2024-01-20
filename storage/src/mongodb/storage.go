@@ -187,13 +187,14 @@ func (s *Storage) Save(value interface{}) error {
 		return err
 	}
 
+	versionKey := tools.GetVersionFieldPath(value)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 	var filter bson.D
 	if rangeKey != "" {
-		filter = bson.D{{hashKey, hashValue}, {rangeKey, rangeValue}, {"model.version", version}}
+		filter = bson.D{{hashKey, hashValue}, {rangeKey, rangeValue}, {versionKey, version}}
 	} else {
-		filter = bson.D{{hashKey, hashValue}, {"model.version", version}}
+		filter = bson.D{{hashKey, hashValue}, {versionKey, version}}
 	}
 
 	fields := tools.GetFieldInfo(value)

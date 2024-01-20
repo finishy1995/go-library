@@ -54,25 +54,25 @@ func GetHashAndRangeKey(value interface{}, useTag bool) (hashKey string, rangeKe
 	if tp.Kind() == reflect.Ptr {
 		tp = tp.Elem()
 	}
-	k := tp.Kind()
-	if k == reflect.Slice {
-		tp = tp.Elem()
-		k = tp.Kind()
-	}
-	if k != reflect.Struct {
+	if tp.Kind() != reflect.Struct {
 		return
 	}
 
-	hashKey, rangeKey = processStruct(tp, useTag, false, false)
+	hashKey, rangeKey = processStruct(tp, useTag, "", false, false)
 	return
 }
 
-func processStruct(tp reflect.Type, useTag bool, foundHashKey bool, foundRangeKey bool) (hashKey string, rangeKey string) {
+func processStruct(tp reflect.Type, useTag bool, prefix string, foundHashKey bool, foundRangeKey bool) (hashKey string, rangeKey string) {
 	for i := 0; i < tp.NumField(); i++ {
 		fieldType := tp.Field(i)
+		fieldName := fieldType.Name
+		if prefix != "" {
+			fieldName = prefix + "." + fieldName
+		}
+
 		if fieldType.Anonymous && fieldType.Type.Kind() == reflect.Struct {
 			// 处理嵌套结构体
-			hk, rk := processStruct(fieldType.Type, useTag, foundHashKey, foundRangeKey)
+			hk, rk := processStruct(fieldType.Type, useTag, fieldName, foundHashKey, foundRangeKey)
 			if !foundHashKey && hk != "" {
 				hashKey = hk
 				foundHashKey = true
@@ -86,11 +86,9 @@ func processStruct(tp reflect.Type, useTag bool, foundHashKey bool, foundRangeKe
 
 		tag := fieldType.Tag.Get("dynamo")
 		tagArr := strings.Split(tag, ",")
-		name := strings.ToLower(fieldType.Name)
-		if useTag {
-			if len(tagArr) > 0 && tagArr[0] != "" {
-				name = tagArr[0]
-			}
+		name := strings.ToLower(fieldName)
+		if useTag && len(tagArr) > 0 && tagArr[0] != "" {
+			name = prefix + "." + tagArr[0]
 		}
 		for j := 1; j < len(tagArr); j++ {
 			if tagArr[j] == "hash" && !foundHashKey {
@@ -139,35 +137,51 @@ func GetFieldInfo(value interface{}) map[string]interface{} {
 
 func GetHashAndRangeValue(value interface{}) (hashValue interface{}, rangeValue interface{}) {
 	val := reflect.ValueOf(value)
-	// 确保我们在处理指向结构体的指针时正确地解引用
 	if val.Kind() == reflect.Ptr && !val.IsNil() {
 		val = val.Elem()
 	}
-	// 类型检查
-	tp := reflect.TypeOf(value)
-	if tp.Kind() == reflect.Ptr {
+
+	tp := val.Type()
+	if tp.Kind() == reflect.Slice {
 		tp = tp.Elem()
 	}
-	k := tp.Kind()
-	if k == reflect.Slice {
-		tp = tp.Elem()
-		k = tp.Kind()
-	}
-	if k != reflect.Struct {
+	if tp.Kind() != reflect.Struct {
 		return
 	}
 
+	return findHashAndRangeValue(val)
+}
+
+func findHashAndRangeValue(val reflect.Value) (hashValue interface{}, rangeValue interface{}) {
+	tp := val.Type()
 	for i := 0; i < tp.NumField(); i++ {
 		fieldType := tp.Field(i)
+		fieldVal := val.Field(i)
+
+		// 检查匿名（嵌套的）字段
+		if fieldType.Anonymous && fieldType.Type.Kind() == reflect.Struct {
+			if fieldVal.Kind() == reflect.Ptr && !fieldVal.IsNil() {
+				fieldVal = fieldVal.Elem()
+			}
+			hv, rv := findHashAndRangeValue(fieldVal)
+			if hashValue == nil {
+				hashValue = hv
+			}
+			if rangeValue == nil {
+				rangeValue = rv
+			}
+			continue
+		}
+
 		tag := fieldType.Tag.Get("dynamo")
 		tagArr := strings.Split(tag, ",")
 		for j := 1; j < len(tagArr); j++ {
-			if tagArr[j] == TagHashMark {
-				hashValue = val.Field(i).Interface()
+			if tagArr[j] == TagHashMark && hashValue == nil {
+				hashValue = fieldVal.Interface()
 				continue
 			}
-			if tagArr[j] == TagRangeMark {
-				rangeValue = val.Field(i).Interface()
+			if tagArr[j] == TagRangeMark && rangeValue == nil {
+				rangeValue = fieldVal.Interface()
 			}
 		}
 	}
@@ -435,4 +449,43 @@ func GetStructVersionFromOriginData(value interface{}) (uint64, error) {
 		}
 	}
 	return 0, core.ErrUnsupportedValueType
+}
+
+func GetVersionFieldPath(value interface{}) string {
+	tp := reflect.TypeOf(value)
+	if tp.Kind() == reflect.Ptr {
+		tp = tp.Elem()
+	}
+	if tp.Kind() != reflect.Struct {
+		return ""
+	}
+
+	return findVersionFieldPath(tp, "")
+}
+
+func findVersionFieldPath(tp reflect.Type, prefix string) string {
+	for i := 0; i < tp.NumField(); i++ {
+		fieldType := tp.Field(i)
+		fieldName := LowerAllChar(fieldType.Name)
+
+		// 更新字段名为包含完整路径
+		if prefix != "" {
+			fieldName = prefix + "." + fieldName
+		}
+
+		if fieldType.Anonymous && fieldType.Type.Kind() == reflect.Struct {
+			// 递归处理嵌套结构体，传递累积的字段名作为前缀
+			versionPath := findVersionFieldPath(fieldType.Type, fieldName)
+			if versionPath != "" {
+				return versionPath
+			}
+			continue
+		}
+
+		tag := fieldType.Tag.Get("dynamo")
+		if strings.Contains(tag, ",version") {
+			return fieldName
+		}
+	}
+	return ""
 }
