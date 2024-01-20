@@ -21,8 +21,9 @@ var (
 )
 
 const (
-	magicStrForDot = "24Jan0120"
-	magicStrForAlt = "24Jan0121"
+	// TODO: 换成 index 下标记录
+	magicStrForDot = "24jan0120"
+	magicStrForAlt = "24jan0121"
 )
 
 func replaceWithExtended(expr string) string {
