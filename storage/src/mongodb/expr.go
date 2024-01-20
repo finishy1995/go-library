@@ -7,6 +7,7 @@ import (
 	"github.com/expr-lang/expr/parser"
 	"github.com/finishy1995/go-library/storage/src/tools"
 	"go.mongodb.org/mongo-driver/bson"
+	"regexp"
 	"strings"
 )
 
@@ -19,12 +20,29 @@ var (
 	}
 )
 
+const (
+	magicStr = "240120"
+)
+
 func replaceWithExtended(expr string) string {
 	tmp := expr
 	for key, value := range keyWordExtended {
 		tmp = strings.ReplaceAll(tmp, " "+key+" ", " "+value+" ")
 	}
 	return tmp
+}
+
+func replaceDotWithMagic(input string) string {
+	// 创建一个正则表达式，匹配点后面跟着的任意大小写字母
+	re := regexp.MustCompile(`\.\p{L}`)
+	// 使用正则表达式替换，用"-"替换"."
+	return re.ReplaceAllStringFunc(input, func(match string) string {
+		return magicStr + match[1:]
+	})
+}
+
+func replaceMagicWithDot(input string) string {
+	return strings.ReplaceAll(input, magicStr, ".")
 }
 
 func replaceWithValue(expr string, args ...interface{}) string {
@@ -36,6 +54,7 @@ func replaceWithValue(expr string, args ...interface{}) string {
 func getRootNode(expr string, args ...interface{}) (*ast.BinaryNode, error) {
 	realExpr := replaceWithExtended(expr)
 	realExpr = replaceWithValue(realExpr, args...)
+	realExpr = replaceDotWithMagic(realExpr)
 
 	// 使用配置解析表达式
 	tree, err := parser.Parse(realExpr)
@@ -99,6 +118,7 @@ func buildFilterFromAST(node *ast.BinaryNode) (bson.D, error) {
 			return nil, fmt.Errorf("unsupported operand type")
 		}
 		left = tools.LowerAllChar(left)
+		left = replaceMagicWithDot(left)
 
 		rightVal, err := getOperandValue(node.Right)
 		if err != nil {

@@ -250,6 +250,13 @@ func TestStorage_Find(t *testing.T) {
 			limit:    2,
 			expected: 2, // 指定限制为2，预期返回2条记录
 		},
+		{
+			name:     "Test condition with limited results",
+			expr:     "Model.Version > ?",
+			args:     []interface{}{1},
+			limit:    2,
+			expected: 0, // 指定限制为2，预期返回2条记录
+		},
 		// 添加更多测试用例...
 	}
 
