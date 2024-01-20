@@ -50,38 +50,56 @@ func GetStructOnlyName(value interface{}) string {
 }
 
 func GetHashAndRangeKey(value interface{}, useTag bool) (hashKey string, rangeKey string) {
-	// 类型检查
 	tp := reflect.TypeOf(value)
 	if tp.Kind() == reflect.Ptr {
 		tp = tp.Elem()
 	}
-	k := tp.Kind()
-	if k == reflect.Slice {
-		tp = tp.Elem()
-		k = tp.Kind()
-	}
-	if k != reflect.Struct {
+	if tp.Kind() != reflect.Struct {
 		return
 	}
 
+	hashKey, rangeKey = processStruct(tp, useTag, false, false)
+	return
+}
+
+func processStruct(tp reflect.Type, useTag bool, foundHashKey bool, foundRangeKey bool) (hashKey string, rangeKey string) {
 	for i := 0; i < tp.NumField(); i++ {
 		fieldType := tp.Field(i)
+		if fieldType.Anonymous && fieldType.Type.Kind() == reflect.Struct {
+			// 处理嵌套结构体
+			hk, rk := processStruct(fieldType.Type, useTag, foundHashKey, foundRangeKey)
+			if !foundHashKey && hk != "" {
+				hashKey = hk
+				foundHashKey = true
+			}
+			if !foundRangeKey && rk != "" {
+				rangeKey = rk
+				foundRangeKey = true
+			}
+			continue
+		}
+
 		tag := fieldType.Tag.Get("dynamo")
 		tagArr := strings.Split(tag, ",")
-		name := LowerAllChar(fieldType.Name)
+		name := strings.ToLower(fieldType.Name)
 		if useTag {
 			if len(tagArr) > 0 && tagArr[0] != "" {
 				name = tagArr[0]
 			}
 		}
 		for j := 1; j < len(tagArr); j++ {
-			if tagArr[j] == TagHashMark {
+			if tagArr[j] == "hash" && !foundHashKey {
 				hashKey = name
-				continue
+				foundHashKey = true
+				break
 			}
-			if tagArr[j] == TagRangeMark {
+			if tagArr[j] == "range" && !foundRangeKey {
 				rangeKey = name
+				foundRangeKey = true
 			}
+		}
+		if foundHashKey && foundRangeKey {
+			break
 		}
 	}
 	return
