@@ -257,6 +257,20 @@ func TestStorage_Find(t *testing.T) {
 			limit:    2,
 			expected: 0, // 指定限制为2，预期返回2条记录
 		},
+		{
+			name:     "Test condition with no expr",
+			expr:     "",
+			args:     []interface{}{1},
+			limit:    10,
+			expected: 4,
+		},
+		{
+			name:     "Test condition with email",
+			expr:     "Id = ?",
+			args:     []interface{}{"finishy@qq.com"},
+			limit:    10,
+			expected: 0,
+		},
 		// 添加更多测试用例...
 	}
 

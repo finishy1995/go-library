@@ -258,15 +258,19 @@ func (s *Storage) Find(value interface{}, limit int64, expr string, args ...inte
 		return core.ErrUnsupportedValueType
 	}
 
-	// 解析表达式获取根节点
-	rootNode, err := getRootNode(expr, args...)
-	if err != nil {
-		return err
-	}
-	// 根据 AST 节点构建 MongoDB 查询条件
-	filter, err := buildFilterFromAST(rootNode)
-	if err != nil {
-		return err
+	filter := bson.D{}
+	var err error
+	if expr != "" {
+		// 解析表达式获取根节点
+		rootNode, err := getRootNode(expr, args...)
+		if err != nil {
+			return err
+		}
+		// 根据 AST 节点构建 MongoDB 查询条件
+		filter, err = buildFilterFromAST(rootNode)
+		if err != nil {
+			return err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)

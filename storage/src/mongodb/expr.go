@@ -21,7 +21,8 @@ var (
 )
 
 const (
-	magicStr = "240120"
+	magicStrForDot = "24Jan0120"
+	magicStrForAlt = "24Jan0121"
 )
 
 func replaceWithExtended(expr string) string {
@@ -32,17 +33,19 @@ func replaceWithExtended(expr string) string {
 	return tmp
 }
 
-func replaceDotWithMagic(input string) string {
+func replaceDotAndAltWithMagic(input string) string {
 	// 创建一个正则表达式，匹配点后面跟着的任意大小写字母
 	re := regexp.MustCompile(`\.\p{L}`)
 	// 使用正则表达式替换，用"-"替换"."
-	return re.ReplaceAllStringFunc(input, func(match string) string {
-		return magicStr + match[1:]
+	tmp := re.ReplaceAllStringFunc(input, func(match string) string {
+		return magicStrForDot + match[1:]
 	})
+	return strings.ReplaceAll(tmp, "@", magicStrForAlt)
 }
 
 func replaceMagicWithDot(input string) string {
-	return strings.ReplaceAll(input, magicStr, ".")
+	tmp := strings.ReplaceAll(input, magicStrForDot, ".")
+	return strings.ReplaceAll(tmp, magicStrForAlt, "@")
 }
 
 func replaceWithValue(expr string, args ...interface{}) string {
@@ -54,7 +57,7 @@ func replaceWithValue(expr string, args ...interface{}) string {
 func getRootNode(expr string, args ...interface{}) (*ast.BinaryNode, error) {
 	realExpr := replaceWithExtended(expr)
 	realExpr = replaceWithValue(realExpr, args...)
-	realExpr = replaceDotWithMagic(realExpr)
+	realExpr = replaceDotAndAltWithMagic(realExpr)
 
 	// 使用配置解析表达式
 	tree, err := parser.Parse(realExpr)
