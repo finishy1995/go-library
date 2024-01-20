@@ -54,7 +54,12 @@ func GetHashAndRangeKey(value interface{}, useTag bool) (hashKey string, rangeKe
 	if tp.Kind() == reflect.Ptr {
 		tp = tp.Elem()
 	}
-	if tp.Kind() != reflect.Struct {
+	k := tp.Kind()
+	if k == reflect.Slice {
+		tp = tp.Elem()
+		k = tp.Kind()
+	}
+	if k != reflect.Struct {
 		return
 	}
 
