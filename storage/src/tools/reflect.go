@@ -125,6 +125,9 @@ func GetFieldInfo(value interface{}) map[string]interface{} {
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		fieldType := tp.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
 
 		tag := fieldType.Tag.Get("dynamo")
 		if tag == "" || (!strings.Contains(tag, TagHashMark) && !strings.Contains(tag, TagRangeMark)) {
@@ -214,7 +217,10 @@ func GetPointer(value interface{}) interface{} {
 		// 如果不是指针，则创建一个指向它的指针
 		valPtr := reflect.New(reflect.TypeOf(value))
 		valPtr.Elem().Set(val)
-		return valPtr.Interface()
+		if valPtr.CanInterface() {
+			return valPtr.Interface()
+		}
+		return nil
 	}
 	return value // 已经是指针
 }
