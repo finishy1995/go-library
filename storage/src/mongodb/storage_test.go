@@ -58,9 +58,9 @@ func TestStorage_CreateTable(t *testing.T) {
 }
 
 func createTable(t *testing.T) {
-	err := st.CreateTable(Student{})
+	err := st.CreateTable(Student{}, "")
 	assert.Nil(t, err)
-	err = st.CreateTable(Classmates{})
+	err = st.CreateTable(Classmates{}, "")
 	assert.Nil(t, err)
 }
 
@@ -90,11 +90,11 @@ func TestStorage_Create(t *testing.T) {
 		},
 	}
 	var stuReal Student
-	err := st.Create(stu)
+	err := st.Create(stu, "")
 	asserts.Nil(err)
-	err = st.Create(stu)
+	err = st.Create(stu, "")
 	asserts.NotNil(err)
-	err = st.First(&stuReal, "111")
+	err = st.First(&stuReal, "", "111")
 	asserts.Nil(err)
 	asserts.Equal(true, stuReal.Star)
 	asserts.Equal(float32(0.1), stuReal.Score)
@@ -106,13 +106,13 @@ func TestStorage_Create(t *testing.T) {
 		UserId: 10,
 	}
 	var clsReal Classmates
-	err = st.Create(cls)
+	err = st.Create(cls, "")
 	asserts.Nil(err)
-	err = st.Create(cls)
+	err = st.Create(cls, "")
 	asserts.NotNil(err)
-	err = st.First(&clsReal, "111")
+	err = st.First(&clsReal, "", "111")
 	asserts.Equal(core.ErrMissingRangeValue, err)
-	err = st.First(&clsReal, "111", 10)
+	err = st.First(&clsReal, "", "111", 10)
 	asserts.Nil(err)
 	asserts.Equal(10, clsReal.UserId)
 	asserts.Equal(float32(0.2), clsReal.Score)
@@ -123,11 +123,11 @@ func TestStorage_Delete(t *testing.T) {
 	createTable(t)
 
 	asserts := assert.New(t)
-	err := st.Delete(Student{}, "111")
+	err := st.Delete(Student{}, "", "111")
 	asserts.Nil(err)
-	err = st.Create(Student{Id: "2"})
+	err = st.Create(Student{Id: "2"}, "")
 	asserts.Nil(err)
-	err = st.Delete(Student{}, "111")
+	err = st.Delete(Student{}, "", "111")
 	asserts.Nil(err)
 }
 
@@ -147,17 +147,17 @@ func TestStorage_Save(t *testing.T) {
 		},
 		Array: []int32{1, 8},
 	}
-	err := st.Save(stu)
+	err := st.Save(stu, "")
 	asserts.Equal(core.ErrExpiredValue, err)
-	err = st.Create(*stu)
+	err = st.Create(*stu, "")
 	asserts.Nil(err)
 	asserts.Equal(uint64(1), stu.Version)
 	stu.Score += 1
-	err = st.Save(stu)
+	err = st.Save(stu, "")
 	asserts.Nil(err)
 
 	var stuReal Student
-	err = st.First(&stuReal, "111")
+	err = st.First(&stuReal, "", "111")
 	asserts.Nil(err)
 	asserts.Equal(float32(1.31), stuReal.Score)
 	asserts.Equal(2, len(stuReal.KeyValue))
@@ -174,16 +174,16 @@ func TestStorage_Save(t *testing.T) {
 		}},
 		UserId: 0,
 	}
-	err = st.Create(*cls)
+	err = st.Create(*cls, "")
 	asserts.Nil(err)
 	cls.UserId += 1
-	err = st.Save(cls)
+	err = st.Save(cls, "")
 	asserts.Equal(core.ErrExpiredValue, err)
 
 	// 当出现 save failed，一定要先 first，再 save
-	err = st.First(cls, "2", 0)
+	err = st.First(cls, "", "2", 0)
 	cls.Score++
-	err = st.Save(cls)
+	err = st.Save(cls, "")
 	asserts.Nil(err)
 }
 
@@ -193,7 +193,7 @@ func TestStorage_First(t *testing.T) {
 
 	asserts := assert.New(t)
 	stu := &Student{}
-	err := st.First(stu, "111")
+	err := st.First(stu, "", "111")
 	asserts.Equal(core.ErrNotFound, err)
 
 	err = st.Create(Classmates{
@@ -202,14 +202,14 @@ func TestStorage_First(t *testing.T) {
 		}},
 		UserId: 12,
 		Score:  2.3,
-	})
+	}, "")
 	asserts.Nil(err)
 	var cls Classmates
-	err = st.First(&cls, "33")
+	err = st.First(&cls, "", "33")
 	asserts.Equal(core.ErrMissingRangeValue, err)
-	err = st.First(&cls, "33", 11)
+	err = st.First(&cls, "", "33", 11)
 	asserts.Equal(core.ErrNotFound, err)
-	err = st.First(&cls, "33", 12)
+	err = st.First(&cls, "", "33", 12)
 	asserts.Nil(err)
 	asserts.Equal(float32(2.3), cls.Score)
 }
@@ -277,7 +277,7 @@ func TestStorage_Find(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var results []Student
-			err := st.Find(&results, tc.limit, tc.expr, tc.args...)
+			err := st.Find(&results, "", tc.limit, tc.expr, tc.args...)
 			if err != nil {
 				t.Fatalf("Find failed: %v", err)
 			}
@@ -300,7 +300,7 @@ func setupTestData(t *testing.T) {
 	}
 
 	for _, student := range students {
-		err := st.Create(student)
+		err := st.Create(student, "")
 		if err != nil {
 			t.Logf("Warning: failed to insert test data: %v", err.Error())
 		}

@@ -1,10 +1,10 @@
 package memory
 
 import (
+	"fmt"
 	"github.com/finishy1995/go-library/routine"
 	"github.com/finishy1995/go-library/storage/core"
 	"github.com/finishy1995/go-library/storage/src/tools"
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -62,10 +62,12 @@ func NewStorage(maxLength int, tick time.Duration) *Storage {
 	return stg
 }
 
-func (s *Storage) CreateTable(value interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (s *Storage) CreateTable(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, false)
 	if hashKey == "" {
@@ -165,10 +167,12 @@ func (s *Storage) process(tb *table) {
 	tb.itemsMutex.Unlock()
 }
 
-func (s *Storage) Create(value interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (s *Storage) Create(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, false)
 	if hashKey == "" {
@@ -219,10 +223,12 @@ func getRealKeyByValue(typ keyType, value ...interface{}) string {
 	return fmt.Sprintf("%v", value[0])
 }
 
-func (s *Storage) Delete(value interface{}, hash interface{}, args ...interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (s *Storage) Delete(value interface{}, tableName string, hash interface{}, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, false)
 	if hashKey == "" {
@@ -252,10 +258,12 @@ func (s *Storage) Delete(value interface{}, hash interface{}, args ...interface{
 	return nil
 }
 
-func (s *Storage) Save(value interface{}) error {
-	tableName := tools.GetStructName(value)
+func (s *Storage) Save(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, false)
 	if hashKey == "" {
@@ -289,10 +297,12 @@ func (s *Storage) Save(value interface{}) error {
 	return err
 }
 
-func (s *Storage) First(value interface{}, hash interface{}, args ...interface{}) error {
-	tableName := tools.GetStructName(value)
+func (s *Storage) First(value interface{}, tableName string, hash interface{}, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, false)
 	if hashKey == "" {
@@ -332,10 +342,12 @@ func (s *Storage) First(value interface{}, hash interface{}, args ...interface{}
 
 // Find 支持 > ; < ; >= ; <= ; <> ; = ; and ; or ; () ; not
 // 本地存储需要新增，可以按照上述计算符添加
-func (s *Storage) Find(value interface{}, limit int64, expr string, args ...interface{}) error {
-	tableName := tools.GetSliceStructName(value)
+func (s *Storage) Find(value interface{}, tableName string, limit int64, expr string, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetSliceStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, false)
 	if hashKey == "" {

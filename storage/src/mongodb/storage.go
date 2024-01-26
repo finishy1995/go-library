@@ -72,10 +72,12 @@ func NewStorage(endpoint, username, password, database string) *Storage {
 	return &Storage{db: db}
 }
 
-func (s *Storage) CreateTable(value interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (s *Storage) CreateTable(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -113,10 +115,12 @@ func (s *Storage) CreateTable(value interface{}) error {
 	return err
 }
 
-func (s *Storage) Create(value interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (s *Storage) Create(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	collection := s.db.Collection(tableName)
 	if collection == nil {
@@ -137,10 +141,12 @@ func (s *Storage) Create(value interface{}) error {
 	return err
 }
 
-func (s *Storage) Delete(value interface{}, hash interface{}, args ...interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (s *Storage) Delete(value interface{}, tableName string, hash interface{}, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -165,10 +171,12 @@ func (s *Storage) Delete(value interface{}, hash interface{}, args ...interface{
 	return err
 }
 
-func (s *Storage) Save(value interface{}) error {
-	tableName := tools.GetStructName(value)
+func (s *Storage) Save(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -214,10 +222,12 @@ func (s *Storage) Save(value interface{}) error {
 	return err
 }
 
-func (s *Storage) First(value interface{}, hash interface{}, args ...interface{}) error {
-	tableName := tools.GetStructName(value)
+func (s *Storage) First(value interface{}, tableName string, hash interface{}, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -248,10 +258,12 @@ func (s *Storage) First(value interface{}, hash interface{}, args ...interface{}
 	return err
 }
 
-func (s *Storage) Find(value interface{}, limit int64, expr string, args ...interface{}) error {
-	tableName := tools.GetSliceStructName(value)
+func (s *Storage) Find(value interface{}, tableName string, limit int64, expr string, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetSliceStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	collection := s.db.Collection(tableName)
 	if collection == nil {

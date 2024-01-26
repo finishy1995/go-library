@@ -2,13 +2,13 @@ package dynamodb
 
 import (
 	"context"
-	"github.com/finishy1995/go-library/storage/core"
-	"github.com/finishy1995/go-library/storage/src/tools"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/finishy1995/go-library/storage/core"
+	"github.com/finishy1995/go-library/storage/src/tools"
 	"github.com/guregu/dynamo"
 	"time"
 )
@@ -54,10 +54,12 @@ func getContext() (aws.Context, context.CancelFunc) {
 }
 
 // CreateTable 创建一个新的存储对象表
-func (st *Storage) CreateTable(value interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (st *Storage) CreateTable(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, _ := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -74,10 +76,12 @@ func (st *Storage) CreateTable(value interface{}) error {
 
 // Create 创建一个新的存储对象（单主键时主键不相同，主键+排序键时有一个不相同）
 // value 为符合 tag 定义的 struct
-func (st *Storage) Create(value interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (st *Storage) Create(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, _ := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -104,10 +108,12 @@ func (st *Storage) Create(value interface{}) error {
 
 // Delete 删除一个存储对象（单主键时不需要额外参数，主键+排序键时需要把排序键的值作为额外参数）
 // value 为符合 tag 定义的 struct
-func (st *Storage) Delete(value interface{}, hash interface{}, args ...interface{}) error {
-	tableName := tools.GetStructOnlyName(value)
+func (st *Storage) Delete(value interface{}, tableName string, hash interface{}, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructOnlyName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -134,10 +140,12 @@ func (st *Storage) Delete(value interface{}, hash interface{}, args ...interface
 
 // Save 保存一个存储对象（请勿用这个方法创建对象，可能会造成同步性问题）
 // value 为符合 tag 定义的 struct ptr（注：一定要是 struct ptr）
-func (st *Storage) Save(value interface{}) error {
-	tableName := tools.GetStructName(value)
+func (st *Storage) Save(value interface{}, tableName string) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, _ := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -162,10 +170,12 @@ func (st *Storage) Save(value interface{}) error {
 
 // First 获取符合要求的存储对象（单主键时不需要额外参数，主键+排序键时需要把排序键的值作为额外参数）
 // value 为符合 tag 定义的 struct ptr
-func (st *Storage) First(value interface{}, hash interface{}, args ...interface{}) error {
-	tableName := tools.GetStructName(value)
+func (st *Storage) First(value interface{}, tableName string, hash interface{}, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	hashKey, rangeKey := tools.GetHashAndRangeKey(value, true)
 	if hashKey == "" {
@@ -204,10 +214,12 @@ func (st *Storage) First(value interface{}, hash interface{}, args ...interface{
 // limit 为限制数量， <= 0 即不限制数量
 // expr 为表达式（空代表不使用表达式），参考 dynamodb 文档、或 https://github.com/guregu/dynamo
 // 其他为补充表达式的具体值
-func (st *Storage) Find(value interface{}, limit int64, expr string, args ...interface{}) error {
-	tableName := tools.GetSliceStructName(value)
+func (st *Storage) Find(value interface{}, tableName string, limit int64, expr string, args ...interface{}) error {
 	if tableName == "" {
-		return core.ErrUnsupportedValueType
+		tableName = tools.GetSliceStructName(value)
+		if tableName == "" {
+			return core.ErrUnsupportedValueType
+		}
 	}
 	tableName = st.prefix + tableName
 
